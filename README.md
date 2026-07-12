@@ -1,5 +1,8 @@
 # AgentCodex: Multi-Agent LLM Code Synthesizer
 
+[![Live Demo](https://img.shields.io/badge/Live%20Demo-Render-gold?style=for-the-badge&logo=render&logoColor=white)](https://multi-agent-llm-code-generator.onrender.com)
+[![GitHub Repo](https://img.shields.io/badge/GitHub-Repository-black?style=for-the-badge&logo=github)](https://github.com/Charanloyal/multi-agent-llm-code-generator)
+
 AgentCodex is a production-ready code generation system utilizing a **critique-synthesis agent loop**, a **Multi-Hop RAG engine**, and **Server-Sent Events (SSE) streaming**. It features an in-memory **write-through caching layer** that bypasses agent generation for cached queries, reducing latency to **sub-2s** (down to `0.04s`).
 
 The user interface features a premium **Black & Gold glassmorphic IDE layout** showing real-time log outputs from the agents side-by-side with a streamed Python code viewer.
