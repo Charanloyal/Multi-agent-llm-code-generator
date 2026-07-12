@@ -1,0 +1,10 @@
+services:
+  - type: web
+    name: multi-agent-llm-code-generator
+    runtime: docker
+    plan: free
+    envVars:
+      - key: APP_ENV
+        value: production
+      - key: PORT
+        value: 8000

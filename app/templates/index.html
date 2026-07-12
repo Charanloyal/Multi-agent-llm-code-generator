@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AgentCodex - Multi-Agent LLM Code Generator</title>
+    <meta name="description" content="Production-grade AI code synthesizer utilizing Multi-Hop RAG, critique loops, and SSE streaming.">
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="https://cdn-icons-png.flaticon.com/512/2103/2103633.png">
+    <link rel="stylesheet" href="/static/css/styles.css">
+    <!-- Font -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;700&family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="background-wrapper">
+        <div class="grid-overlay"></div>
+        <div class="blob blob-1"></div>
+        <div class="blob blob-2"></div>
+        <div class="blob blob-3"></div>
+    </div>
+
+    <svg style="width:0;height:0;position:absolute;" aria-hidden="true" focusable="false">
+        <linearGradient id="logo-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#f3e5ab" />
+            <stop offset="100%" stop-color="#d4af37" />
+        </linearGradient>
+    </svg>
+
+    <header>
+        <div class="logo">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="16 18 22 12 16 6"></polyline>
+                <polyline points="8 6 2 12 8 18"></polyline>
+            </svg>
+            <span>AgentCodex</span>
+        </div>
+        <div class="header-right">
+            <div id="cache-indicator" class="cache-badge">Cache: 0 items</div>
+            <span class="badge">Multi-Agent RAG</span>
+        </div>
+    </header>
+
+    <main>
+        <section class="hero">
+            <h1>Multi-Agent <span>LLM Code Synthesizer</span></h1>
+            <p>Architected with critique & synthesis loops, multi-hop TF-IDF retrieval, real-time SSE token streaming, and dynamic latency-reducing query caching.</p>
+        </section>
+
+        <!-- IDE Workspace layout -->
+        <div class="ide-workspace">
+            <!-- Left Panel: Configurations & Prompt Input -->
+            <div class="panel controls-panel">
+                <h2>Prompt Specification</h2>
+                <form id="generator-form" onsubmit="handleGeneration(event)">
+                    <div class="form-group">
+                        <label for="prompt">Generation Prompt</label>
+                        <textarea id="prompt" rows="5" class="form-input" placeholder="e.g. Create a FastAPI app with Redis rate limiting and connection pooling..." required>Create a FastAPI app with Redis rate limiting and connection pooling</textarea>
+                    </div>
+
+                    <div class="param-grid">
+                        <div class="form-group">
+                            <label for="max_critiques">Critique Loops</label>
+                            <select id="max_critiques" class="form-input">
+                                <option value="1">1 Refinement</option>
+                                <option value="2" selected>2 Refinements</option>
+                                <option value="3">3 Refinements</option>
+                                <option value="4">4 Refinements</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="hops">RAG Search Hops</label>
+                            <select id="hops" class="form-input">
+                                <option value="1">1 Hop (Direct)</option>
+                                <option value="2" selected>2 Hops (Multi-Hop)</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group" style="grid-column: span 2;">
+                            <label for="temperature">Agent Temperature (Creativity)</label>
+                            <div class="slider-wrapper">
+                                <input type="range" id="temperature" min="0.0" max="1.0" step="0.1" value="0.5" oninput="document.getElementById('temp-val').innerText = this.value">
+                                <span id="temp-val" class="slider-value">0.5</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="btn-group">
+                        <button type="submit" id="generate-btn" class="btn">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+                            Run Pipeline
+                        </button>
+                        <button type="button" onclick="clearCache()" class="btn btn-outline" title="Wipe Query Cache">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"></path><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Right Panel: SSE Stream Console Logs & Highlighted Output Code -->
+            <div class="panel display-panel">
+                <!-- Terminal logs container -->
+                <div class="terminal-container">
+                    <div class="terminal-header">
+                        <div class="terminal-dots">
+                            <span class="dot red"></span>
+                            <span class="dot yellow"></span>
+                            <span class="dot green"></span>
+                        </div>
+                        <div class="terminal-title">Agent Execution Console</div>
+                    </div>
+                    <div id="terminal-logs" class="terminal-body">
+                        <div class="log-line system">&gt; System Ready. Awaiting prompt request...</div>
+                    </div>
+                </div>
+
+                <!-- Code output container -->
+                <div class="code-container">
+                    <div class="code-header">
+                        <div class="code-title">Synthesized Script Output</div>
+                        <button onclick="copyCode()" class="copy-btn" id="copy-btn">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                            Copy
+                        </button>
+                    </div>
+                    <pre><code id="code-block" class="python"># Synthesized production code will stream here in real-time...</code></pre>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer>
+        <p>&copy; 2026 AgentCodex. Engineered with Python, FastAPI & Multi-Agent Critique Systems.</p>
+    </footer>
+
+    <script src="/static/js/app.js"></script>
+</body>
+</html>
