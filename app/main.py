@@ -29,7 +29,7 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(
     title="Multi-Agent LLM Code Generator",
-    description="A multi-agent Python code synthesizer utilizing TF-IDF Multi-Hop RAG, async queuing, SSE streaming, and caching.",
+    description="Prototype of a multi-agent Python code synthesizer with simulated agents (no LLM calls), keyword-based multi-hop retrieval, SSE streaming, and in-memory caching.",
     version="1.0.0",
     lifespan=lifespan
 )
@@ -52,7 +52,7 @@ async def stream_generation(
 ):
     """
     Streams multi-agent retrieval and synthesis progress in real-time.
-    Implements a write-through caching layer to ensure sub-2s latency on cache hits.
+    Serves repeated identical requests from an in-memory cache instead of re-running the steps.
     """
     global rag_engine, agent_orchestrator, generation_cache
     
@@ -76,7 +76,7 @@ async def stream_generation(
             yield f"data: {json.dumps({'status': 'SYNTHESIZING_STREAM', 'code': cached_code})}\n\n"
             await asyncio.sleep(0.3)
             
-            yield f"data: {json.dumps({'status': 'COMPLETED', 'log': 'System Cache: Cache retrieval complete. (Generation Latency: 0.04s)', 'final_code': cached_code})}\n\n"
+            yield f"data: {json.dumps({'status': 'COMPLETED', 'log': 'System Cache: Cache retrieval complete.', 'final_code': cached_code})}\n\n"
             return
 
         # Step 2: Cache Miss -> Run RAG
